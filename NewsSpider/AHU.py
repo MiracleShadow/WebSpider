@@ -2,6 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 import csv
+from retrying import retry
 import time
 
 
@@ -59,30 +60,25 @@ class NewsSpider:
         """
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
         content = ""
-        p_list = soup.select('.read p')
-        div_list = soup.select('.read div')
-        # if len(p_list) > 0:
-        #     for p in p_list:
-        #         for p_child in p.descendants:
-        #             # 遍历子孙节点，并过滤无用标签，如<style>
-        #             if p_child.name is not None and p_child.name != 'style':
-        #                 # print(p_child.name, p_child.string)
-        #                 content += p_child.get_text()
-        # else:
-        #     for div in div_list:
-        #         content += div.get_text()
-        for div_child in div_list:
-            if div_child.name is not None and div_child.name != 'style':
-                content += div_child.string
+        p_list = soup.select('.wp_articlecontent p')
+        div_list = soup.select('.wp_articlecontent div')
+        for p in p_list:
+            for p_child in p.descendants:
+                # 遍历子孙节点，并过滤无用标签，如<style>
+                if p_child.name is not None and p_child.name != 'style':
+                    # print(p_child.name, p_child.string)
+                    content += p_child.get_text()
+        for div in div_list:
+            content += div.get_text()
         news_dic = {
             'title': title,
             'date': date,
             'content': content.replace('\xa0', '')
         }
         print(title, date, content)
-        # if len(content) > 0:
-        #     self.save_to_csv(news_dic)
-        return
+        if len(content) > 0:
+            self.save_to_csv(news_dic)
+        return news_dic
 
     @staticmethod
     def save_to_csv(news_dic):
@@ -99,15 +95,15 @@ class NewsSpider:
             print("保存成功! Title:{} Date:{}".format(news_dic['title'], news_dic['date']))
             csvfile.close()
 
-    def get_pagesnum(self):
+    def get_PagesNum(self):
         """
         获取新闻网页的总页数
         :return: number of pages
         """
         soup = BeautifulSoup(self.start_requests(), 'lxml')
-        pagesnum = soup.find(attrs={'class': 'all_pages'}).string
-        print("number of pages: ", pagesnum)
-        return pagesnum
+        pages_num = soup.find(attrs={'class': 'all_pages'}).string
+        print("number of pages: ", pages_num)
+        return pages_num
 
     def work(self, page_num=None):
         """
@@ -116,7 +112,7 @@ class NewsSpider:
         :return: None
         """
         if page_num is None:
-            page_num = int(self.get_pagesnum())
+            page_num = int(self.get_PagesNum())
         for i in range(page_num, 0, -1):
             page_url = "http://www.ahu.edu.cn/15129/list{}.htm".format(i)
             print("开始爬取第{}页".format(i))
@@ -125,4 +121,4 @@ class NewsSpider:
 
 if __name__ == '__main__':
         news = NewsSpider()
-        news.work(page_num=371)
+        news.work()
