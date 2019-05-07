@@ -3,6 +3,7 @@ from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 import csv
 from retrying import retry
+import multiprocessing
 import time
 
 
@@ -34,6 +35,7 @@ class NewsSpider:
             print(e)
         return ""
 
+    @retry(stop_max_attempt_number=3)
     def bs4_analysis(self, url=NewsPage_url):
         soup = BeautifulSoup(self.start_requests(url=url), 'lxml')
         # title = soup.title.string   # 新闻资讯
@@ -61,7 +63,7 @@ class NewsSpider:
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
         content = ""
         p_list = soup.select('.wp_articlecontent p')
-        div_list = soup.select('.wp_articlecontent div')
+        div_list = soup.select('.wp_articlecontent')
         for p in p_list:
             for p_child in p.descendants:
                 # 遍历子孙节点，并过滤无用标签，如<style>
@@ -75,7 +77,7 @@ class NewsSpider:
             'date': date,
             'content': content.replace('\xa0', '')
         }
-        print(title, date, content)
+        # print(title, date, content)
         if len(content) > 0:
             self.save_to_csv(news_dic)
         return news_dic
@@ -112,13 +114,20 @@ class NewsSpider:
         :return: None
         """
         if page_num is None:
+            # 若无参数，则获取总页数开始爬取
             page_num = int(self.get_PagesNum())
+
+        # 多进程爬取，阻塞按顺序存储
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
         for i in range(page_num, 0, -1):
             page_url = "http://www.ahu.edu.cn/15129/list{}.htm".format(i)
             print("开始爬取第{}页".format(i))
-            self.bs4_analysis(url=page_url)
+            pool.apply(self.bs4_analysis, (page_url, ))
+            # self.bs4_analysis(url=page_url)
+        pool.close()
+        pool.join()
 
 
 if __name__ == '__main__':
-        news = NewsSpider()
-        news.work()
+    news = NewsSpider()
+    news.work()
