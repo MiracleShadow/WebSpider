@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import csv
 from retrying import retry
 import multiprocessing
+import os
 import time
 
 
@@ -35,8 +36,16 @@ class NewsSpider:
             print(e)
         return ""
 
-    @retry(stop_max_attempt_number=3)
+    @retry(stop_max_attempt_number=5, wait_random_min=1000, wait_random_max=2000)
     def bs4_analysis(self, url=NewsPage_url):
+        """
+        @retry
+            stop_max_attempt_number: 在停止之前尝试的最大次数，最后一次如果还是有异常则会抛出异常，停止运行
+            wait_random_min：在两次调用方法停留时长，停留最短时间，默认为0
+            wait_random_max：在两次调用方法停留时长，停留最长时间，默认为1000毫秒
+        :param url:
+        :return:
+        """
         soup = BeautifulSoup(self.start_requests(url=url), 'lxml')
         # title = soup.title.string   # 新闻资讯
         td_table = soup.select('#wp_news_w25 li')
@@ -49,6 +58,7 @@ class NewsSpider:
                 self.get_NewsDic(news_url=news_url, title=title, date=date)
             except AttributeError as e:
                 print(e)
+                raise e
         return
 
     def get_NewsDic(self, news_url, title, date):
@@ -61,7 +71,7 @@ class NewsSpider:
         :return:
         """
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
-        content = ""
+        p_content, div_content = "", ""
         p_list = soup.select('.wp_articlecontent p')
         div_list = soup.select('.wp_articlecontent')
         for p in p_list:
@@ -69,17 +79,28 @@ class NewsSpider:
                 # 遍历子孙节点，并过滤无用标签，如<style>
                 if p_child.name is not None and p_child.name != 'style':
                     # print(p_child.name, p_child.string)
-                    content += p_child.get_text()
+                    p_content += p_child.get_text()
         for div in div_list:
-            content += div.get_text()
+            div_content += div.get_text()
+        if len(p_content) > 0 and len(div_content) > 0:
+            content = p_content if len(p_content) < len(div_content) else div_content
+        else:
+            content = p_content if len(p_content) > len(div_content) else div_content
         news_dic = {
             'title': title,
             'date': date,
-            'content': content.replace('\xa0', '')
+            'content': content.replace('\xa0', ''),
         }
-        # print(title, date, content)
+        # print("{} {}\n{}\n\n".format(title, date, content))
         if len(content) > 0:
             self.save_to_csv(news_dic)
+        else:
+            print("保存失败！URL:{}".format(news_url))
+            with open('fail.csv', 'a', newline='', encoding='utf-8') as csvfile:
+                fieldnames = ['title', 'date', 'url']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writerow(title, date, news_url)
+                csvfile.close()
         return news_dic
 
     @staticmethod
@@ -131,3 +152,4 @@ class NewsSpider:
 if __name__ == '__main__':
     news = NewsSpider()
     news.work()
+    os.system("shutdown -s -t  60 ")
