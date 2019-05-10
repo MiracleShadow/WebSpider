@@ -1,3 +1,12 @@
+# -*- encoding: utf-8 -*-
+"""
+@File    : HFUTexchange.py
+@Author  : MiracleShadow
+@Time    : 2019-5-7 18:00
+@Email   : zhangzhuheng2018@gmail.com
+@Software: PyCharm
+"""
+
 import requests
 from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
@@ -94,13 +103,6 @@ class NewsSpider:
         # print("{} {}\n{}\n\n".format(title, date, content))
         if len(content) > 0:
             self.save_to_csv(news_dic)
-        else:
-            print("保存失败！URL:{}".format(news_url))
-            with open('fail.csv', 'a', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['title', 'date', 'url']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writerow(title, date, news_url)
-                csvfile.close()
         return news_dic
 
     @staticmethod
@@ -152,4 +154,4 @@ class NewsSpider:
 if __name__ == '__main__':
     news = NewsSpider()
     news.work()
-    os.system("shutdown -s -t  60 ")
+    # os.system("shutdown -s -t  60 ")
