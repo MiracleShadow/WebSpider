@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 """
-@File    : HFUTexchange.py
+@File    : HFUT_exchange.py
 @Author  : MiracleShadow
 @Time    : 2019-5-10 19:24
 @Email   : zhangzhuheng2018@gmail.com
