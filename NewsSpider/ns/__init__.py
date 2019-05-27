@@ -76,7 +76,7 @@ class NewsSpider:
         return True
 
     @retry(stop_max_attempt_number=5, wait_random_min=1000, wait_random_max=2000)
-    def number_of_pages(self, select):
+    def total_news_pages(self, select):
         soup = BeautifulSoup(self.start_requests(url=self.news_page_url.format(1)), 'lxml')
         print(soup)
         pages_num = soup.select(select)
@@ -150,7 +150,16 @@ class NewsSpider:
             print("Save to csv successful! Title:{} Date:{}".format(news_dic['Title'], news_dic['Date']))
             csv_file.close()
 
-    def run(self, page_num=None):
+    def work(self, page):
+        """
+
+        :param page:
+        :return:
+        """
+        for news_dic in self.get_news_dic_list(self.news_page_url.format(page)):
+            self.save_to_csv(news_dic=news_dic)
+
+    def run(self, page_num=None, multiprocess=False):
         """
         爬虫入口
         倒序遍历新闻页爬取
@@ -165,22 +174,27 @@ class NewsSpider:
 
         if page_num is None:
             # 若无参数，则获取总页数开始爬取
-            page_num = int(self.number_of_pages())
+            page_num = int(self.total_news_pages())
 
         self.create_csv()
 
-        for i in range(page_num, 0, -1):
-            news_page_url = self.news_page_url.format(i)
-            print("开始爬取第{}页".format(i))
-            # news_dic_list = self.get_news_dic_list(news_page_url)
-            # for news_dic in news_dic_list:
-            #     self.save_to_csv(news_dic=news_dic)
-            for news_dic in self.get_news_dic_list(news_page_url):
-                self.save_to_csv(news_dic=news_dic)
+        # 多进程爬取，阻塞按顺序存储
+        if multiprocess:
+            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            for i in range(page_num, 0, -1):
+                print("开始多进程爬取第{}页".format(i))
+                pool.apply_async(self.work, (i,))
+            pool.close()
+            pool.join()
+        else:
+            for i in range(page_num, 0, -1):
+                print("开始爬取第{}页".format(i))
+                self.work(i)
 
 
 if __name__ == '__main__':
     ns = NewsSpider(name='UCTS', news_page_url='http://news.ustc.edu.cn/xwbl/list{}.htm',
-                    main_url='http://news.ustc.edu.cn', csv_file_path='CSVFiles/UCTS_news.csv',
+                    main_url='http://news.ustc.edu.cn', csv_file_path='../CSVFiles/UCTS_news.csv',
                     select_dic_list='#wp_news_w3 li', select_content='#articleShow p')
-    ns.run(1)
+    # ns.run(291)
+    ns.run(291, multiprocess=True)
