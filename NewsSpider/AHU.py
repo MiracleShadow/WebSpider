@@ -96,14 +96,28 @@ class NewsSpider:
         else:
             content = p_content if len(p_content) > len(div_content) else div_content
         news_dic = {
-            'title': title,
-            'date': date,
-            'content': content.replace('\xa0', ''),
+            'Title': title,
+            'Date': date,
+            'Content': content.replace('\xa0', ''),
+            'Url': news_url,
         }
         # print("{} {}\n{}\n\n".format(title, date, content))
         if len(content) > 0:
             self.save_to_csv(news_dic)
         return news_dic
+
+    @staticmethod
+    def create_csv():
+        """
+        新建csv文件保存爬取的新闻信息
+        :return:
+        """
+        csv_head = ["Title", "Date", "Content", "Url"]
+        with open('CSVFiles/AH_news.csv', 'w', newline='') as csv_file:
+            csv_write = csv.writer(csv_file)
+            csv_write.writerow(csv_head)
+            print("Create csv file successful! path:{}".format('CSVFiles/AH_news.csv'))
+            csv_file.close()
 
     @staticmethod
     def save_to_csv(news_dic):
@@ -112,12 +126,12 @@ class NewsSpider:
         :param news_dic:
         :return:
         """
-        with open('AH_news.csv', 'a', newline='', encoding='utf-8') as csvfile:
+        with open('CSVFiles/AH_news.csv', 'a', newline='', encoding='utf-8') as csvfile:
             # newline='' 解决空行
-            fieldnames = ['title', 'date', 'content']
+            fieldnames = ['Title', 'Date', 'Content', 'Url']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow(news_dic)
-            print("保存成功! Title:{} Date:{}".format(news_dic['title'], news_dic['date']))
+            print("保存成功! Title:{} Date:{}".format(news_dic['Title'], news_dic['Date']))
             csvfile.close()
 
     def get_PagesNum(self):
@@ -139,6 +153,7 @@ class NewsSpider:
         if page_num is None:
             # 若无参数，则获取总页数开始爬取
             page_num = int(self.get_PagesNum())
+        self.create_csv()
 
         # 多进程爬取，阻塞按顺序存储
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
