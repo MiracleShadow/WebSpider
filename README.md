@@ -3,7 +3,7 @@
 ## TODO
 
 - [x] [淮南师范学院](http://www.hnnu.edu.cn/199/list.htm)
-- [ ] [中国科学技术大学](http://news.ustc.edu.cn/8097/list.htm)
+- [x] [中国科学技术大学](http://news.ustc.edu.cn/8097/list.htm)
 - [x] [合肥工业大学](http://news.hfut.edu.cn/list-1-1.html)
 - [x] [安徽大学](http://www.ahu.edu.cn/15129/list.htm)
 - [ ] [安徽师范大学](http://www.ahnu.edu.cn/3194)
