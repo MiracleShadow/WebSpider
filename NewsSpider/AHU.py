@@ -91,10 +91,10 @@ class NewsSpider:
                     p_content += p_child.get_text()
         for div in div_list:
             div_content += div.get_text()
-        if len(p_content) > 0 and len(div_content) > 0:
-            content = p_content if len(p_content) < len(div_content) else div_content
-        else:
+        if not p_content or not div_content:
             content = p_content if len(p_content) > len(div_content) else div_content
+        else:
+            content = p_content if len(p_content) < len(div_content) else div_content
         news_dic = {
             'Title': title,
             'Date': date,
@@ -102,7 +102,7 @@ class NewsSpider:
             'Url': news_url,
         }
         # print("{} {}\n{}\n\n".format(title, date, content))
-        if len(content) > 0:
+        if content != '':
             self.save_to_csv(news_dic)
         return news_dic
 
