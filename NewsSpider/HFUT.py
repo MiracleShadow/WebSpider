@@ -104,9 +104,7 @@ class NewsSpider:
         """
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
         p_list = soup.select('#artibody p')
-        content = ""
-        for p in p_list:
-            content += p.get_text()
+        content = "".join(p.get_text() for p in p_list)
         content = content.replace('\xa0', '').replace('\n', '').replace('\r\t', '')
         return content
 

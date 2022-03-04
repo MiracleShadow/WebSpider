@@ -98,13 +98,12 @@ class NewsSpider:
                 title = li.find(name='a').string
                 date = li.find(name='span').string
                 content = self.get_news_content(news_url=url, select=self.select_content)
-                news_dic = {
+                yield {
                     'Title': title,
                     'Date': date,
                     'Content': content,
                     'Url': url,
                 }
-                yield news_dic
             except TypeError:
                 continue
 
@@ -118,9 +117,7 @@ class NewsSpider:
         """
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
         p_list = soup.select(select)
-        content = ""
-        for p in p_list:
-            content += p.get_text()
+        content = "".join(p.get_text() for p in p_list)
         content = content.replace('\xa0', '').replace('\n', '').replace('\r\t', '')
         return content
 

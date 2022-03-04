@@ -22,7 +22,6 @@ class NewsSpider:
             return html.text
         except:
             print('request error')
-            pass
 
     def bs4_analysis(self, url=NewsPage_url):
         soup = BeautifulSoup(self.start_requests(url=url), 'lxml')
@@ -45,11 +44,8 @@ class NewsSpider:
         :return:
         """
         soup = BeautifulSoup(self.start_requests(url=news_url), 'lxml')
-        content = ""
         p_list = soup.select('.Article_Content p')
-        for p in p_list:
-            content += p.get_text()
-
+        content = "".join(p.get_text() for p in p_list)
         news_dic = {
             'title': title,
             'date': date,
